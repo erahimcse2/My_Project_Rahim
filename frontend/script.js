@@ -1,7 +1,7 @@
 // =========================
 // API URL (Change this)
 // =========================
-const API_URL = "https://my-project-rahim.onrender.com/";
+const API_URL = "https://my-project-rahim.onrender.com";
 const STUDENTS_URL = `${API_URL}/students/`;
 
 // =========================
@@ -228,7 +228,7 @@ async function deleteStudent(roll) {
 
         if (studentIdInput.value == id)
             resetForm();
-
+        
         loadStudents();
 
     } catch (error) {
