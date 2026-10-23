@@ -1,3 +1,4 @@
+
 from pydantic import BaseModel
 
 
@@ -8,16 +9,21 @@ class BaseStudent(BaseModel):
     session: int
     department: str
 
+
 class StudentCreateRequet(BaseStudent):
     pass
+
 
 class StudentUpdateRequest(BaseModel):
     first_name: str
     last_name: str
     department: str
+    session: int
+    roll: str
+
 
 class StudentResponse(BaseStudent):
-    id : int
+    id: int
 
     class Config:
-        orm_mode = True 
+        orm_mode = True
