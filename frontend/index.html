@@ -1,8 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Student Management System</title>
     <link rel="stylesheet" href="style.css">
 
@@ -109,6 +111,7 @@
 <body>
     <h1>Student Management System</h1>
 
+    <!-- Student Form -->
     <section class="card">
         <h2 id="formTitle">Add New Student</h2>
 
@@ -119,7 +122,7 @@
                 <input
                     type="text"
                     id="first_name"
-                    placeholder="Student first Name"
+                    placeholder="Student First Name"
                     maxlength="100"
                     required
                 >
@@ -127,7 +130,7 @@
                 <input
                     type="text"
                     id="last_name"
-                    placeholder="Student last Name"
+                    placeholder="Student Last Name"
                     maxlength="100"
                     required
                 >
@@ -140,14 +143,7 @@
                     required
                 >
 
-                <input
-                    type="text"
-                    id="roll"
-                    placeholder="Roll"
-                    maxlength="100"
-                    required
-                >
-
+                <!-- Session first -->
                 <input
                     type="number"
                     id="session"
@@ -156,11 +152,24 @@
                     step="1"
                     required
                 >
+
+                <!-- Roll second -->
+                <input
+                    type="text"
+                    id="roll"
+                    placeholder="Roll"
+                    maxlength="100"
+                    required
+                >
             </div>
 
             <br>
 
-            <button type="submit" id="submitBtn" class="primary">
+            <button
+                type="submit"
+                id="submitBtn"
+                class="primary"
+            >
                 Add Student
             </button>
 
@@ -177,10 +186,15 @@
         <p id="message" role="status" aria-live="polite"></p>
     </section>
 
+    <!-- Student List -->
     <section class="card">
         <h2>Student List</h2>
 
-        <button type="button" id="refreshBtn" class="primary">
+        <button
+            type="button"
+            id="refreshBtn"
+            class="primary"
+        >
             Refresh Students
         </button>
 

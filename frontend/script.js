@@ -1,12 +1,8 @@
-// =========================
-// API URL (Change this)
-// =========================
+
 const API_URL = "https://my-project-rahim.onrender.com";
 const STUDENTS_URL = `${API_URL}/students/`;
 
-// =========================
 // DOM Elements
-// =========================
 const form = document.getElementById("studentForm");
 const studentTable = document.getElementById("studentTable");
 const message = document.getElementById("message");
@@ -23,26 +19,27 @@ const submitBtn = document.getElementById("submitBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 const refreshBtn = document.getElementById("refreshBtn");
 
-// =========================
+// Store original roll while editing
+let editingRoll = null;
+
 // Error Message
-// =========================
 function getErrorMessage(data) {
     if (data.detail) {
         return typeof data.detail === "string"
             ? data.detail
             : JSON.stringify(data.detail);
     }
+
     return "Something went wrong.";
 }
 
-// =========================
 // GET All Students
-// =========================
 async function loadStudents() {
     refreshBtn.disabled = true;
+
     studentTable.innerHTML = `
         <tr>
-            <td colspan="6">Loading students...</td>
+            <td colspan="7">Loading students...</td>
         </tr>
     `;
 
@@ -61,7 +58,7 @@ async function loadStudents() {
         if (students.length === 0) {
             studentTable.innerHTML = `
                 <tr>
-                    <td colspan="6">No students found.</td>
+                    <td colspan="7">No students found.</td>
                 </tr>
             `;
             return;
@@ -70,111 +67,128 @@ async function loadStudents() {
         students.forEach(student => {
             const row = document.createElement("tr");
 
-            row.innerHTML = `
-                <td>${student.id}</td>
-                <td>${student.first_name}</td>
-                <td>${student.last_name}</td>
-                <td>${student.department}</td>
-                <td>${student.session}</td>
-                <td>${student.roll}</td>
-                <td>
-                    <button class="edit">Edit</button>
-                    <button class="delete">Delete</button>
-                </td>
-            `;
+            // Session first, Roll second
+            const values = [
+                student.id,
+                student.first_name,
+                student.last_name,
+                student.department,
+                student.session,
+                student.roll
+            ];
 
-            row.querySelector(".edit")
-                .addEventListener("click", () => editStudent(student));
+            values.forEach(value => {
+                const cell = document.createElement("td");
+                cell.textContent = value ?? "";
+                row.appendChild(cell);
+            });
 
-            row.querySelector(".delete")
-                .addEventListener("click", () => deleteStudent(student.roll));
+            const actionCell = document.createElement("td");
 
+            const editButton = document.createElement("button");
+            editButton.textContent = "Edit";
+            editButton.className = "edit";
+            editButton.type = "button";
+            editButton.addEventListener("click", () => editStudent(student));
+
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Delete";
+            deleteButton.className = "delete";
+            deleteButton.type = "button";
+            deleteButton.addEventListener("click", () => deleteStudent(student.roll));
+
+            actionCell.append(editButton, deleteButton);
+            row.appendChild(actionCell);
             studentTable.appendChild(row);
         });
 
     } catch (error) {
-        studentTable.innerHTML = `
-            <tr>
-                <td colspan="6">
-                    Could not load students: ${error.message}
-                </td>
-            </tr>
-        `;
+        studentTable.innerHTML = "";
+
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+
+        cell.colSpan = 7;
+        cell.textContent = `Could not load students: ${error.message}`;
+
+        row.appendChild(cell);
+        studentTable.appendChild(row);
+
     } finally {
         refreshBtn.disabled = false;
     }
 }
 
-// =========================
 // Edit Student
-// =========================
 function editStudent(student) {
+    editingRoll = String(student.roll);
+
     studentIdInput.value = student.id;
     firstName.value = student.first_name;
     lastName.value = student.last_name;
     department.value = student.department;
     session.value = student.session;
-    roll.value = student.roll
+    roll.value = student.roll;
 
     formTitle.textContent = "Update Student";
     submitBtn.textContent = "Update Student";
     cancelBtn.hidden = false;
 
-    form.scrollIntoView({
-        behavior: "smooth"
-    });
+    form.scrollIntoView({ behavior: "smooth" });
 }
 
-// =========================
 // Reset Form
-// =========================
 function resetForm() {
     form.reset();
     studentIdInput.value = "";
+    editingRoll = null;
 
     formTitle.textContent = "Add New Student";
     submitBtn.textContent = "Add Student";
     cancelBtn.hidden = true;
 }
 
-// =========================
-// Cancel Button
-// =========================
+// Cancel Edit
 cancelBtn.addEventListener("click", () => {
     resetForm();
     message.textContent = "";
 });
 
-// =========================
-// POST / PUT
-// =========================
+// CREATE / UPDATE Student
 form.addEventListener("submit", async (event) => {
     event.preventDefault();
-
-    const id = studentIdInput.value;
 
     const student = {
         first_name: firstName.value.trim(),
         last_name: lastName.value.trim(),
-        session : Number(session.value.trim()),
         department: department.value.trim(),
-        roll: roll.value
+        session: Number(session.value),
+        roll: roll.value.trim()
     };
 
-    if (!student.first_name || !student.department || !student.roll) {
-        message.textContent = "Please fill all fields.";
+    if (
+        !student.first_name ||
+        !student.last_name ||
+        !student.department ||
+        !student.roll ||
+        !session.value ||
+        !Number.isInteger(student.session) ||
+        student.session < 1
+    ) {
+        message.textContent = "Please enter valid values in all fields.";
         return;
     }
 
+    const isEditing = editingRoll !== null;
 
-    const url = id
-        ? `${STUDENTS_URL}`+`update/${roll.value}`
-        : STUDENTS_URL+'create';
+    const url = isEditing
+        ? `${STUDENTS_URL}update/${encodeURIComponent(editingRoll)}`
+        : `${STUDENTS_URL}create`;
 
-    const method = id ? "PATCH" : "POST";
+    const method = isEditing ? "PATCH" : "POST";
 
     submitBtn.disabled = true;
-    message.textContent = id
+    message.textContent = isEditing
         ? "Updating student..."
         : "Creating student...";
 
@@ -192,57 +206,53 @@ form.addEventListener("submit", async (event) => {
             throw new Error(getErrorMessage(errorData));
         }
 
-        message.textContent = id
+        message.textContent = isEditing
             ? "Student updated successfully!"
             : "Student created successfully!";
 
         resetForm();
-        loadStudents();
+        await loadStudents();
 
     } catch (error) {
         message.textContent = error.message;
+
     } finally {
         submitBtn.disabled = false;
     }
 });
 
-// =========================
 // DELETE Student
-// =========================
-async function deleteStudent(roll) {
-
-    if (!confirm(`Delete student ${roll}?`))
+async function deleteStudent(studentRoll) {
+    if (!confirm(`Delete student ${studentRoll}?`)) {
         return;
+    }
 
     try {
-        const response = await fetch(`${STUDENTS_URL}${roll}`, {
-            method: "DELETE"
-        });
+        const response = await fetch(
+            `${STUDENTS_URL}${encodeURIComponent(studentRoll)}`,
+            { method: "DELETE" }
+        );
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(getErrorMessage(errorData));
         }
 
-        message.textContent = "Student deleted successfully!";
-
-        if (studentIdInput.value == id)
+        // Reset form if the deleted student is being edited
+        if (editingRoll === String(studentRoll)) {
             resetForm();
-        
-        loadStudents();
+        }
+
+        message.textContent = "Student deleted successfully!";
+        await loadStudents();
 
     } catch (error) {
         message.textContent = error.message;
     }
 }
 
-
-// =========================
 // Refresh Button
-// =========================
 refreshBtn.addEventListener("click", loadStudents);
 
-// =========================
 // Initial Load
-// =========================
 loadStudents();
